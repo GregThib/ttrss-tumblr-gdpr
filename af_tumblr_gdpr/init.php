@@ -23,17 +23,12 @@ class Af_Tumblr_GDPR extends Plugin {
 			$host->add_hook($host::HOOK_PREFS_TAB, $this);
 		}
 
-		if(!$this->host->get($this, 'supported')) {
-			$this->host->set($this, 'supported', array(
-				'.tumblr.com',
-			));
-		}
 	}
 
 	private function is_supported($url) {
 		$supported = $this->host->get($this, "supported");
 		$supported = array_map(function($a) {return preg_quote($a, '/');}, $supported);
-		$preg='/' . implode('|', $supported) . '/i';
+		$preg='/\.tumblr\.com|' . implode('|', $supported) . '/i';
 
 		return preg_match($preg, $url);
 	}
