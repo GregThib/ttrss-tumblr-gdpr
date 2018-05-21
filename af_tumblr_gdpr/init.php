@@ -202,7 +202,7 @@ class Af_Tumblr_GDPR extends Plugin {
 
 	function save()
 	{
-		$supported = explode(PHP_EOL, $_POST['tumblr_support']);
+		$supported = explode("\r\n", $_POST['tumblr_support']);
 		$supported = array_filter($supported);
 
 		$this->host->set($this, 'supported', $supported);
