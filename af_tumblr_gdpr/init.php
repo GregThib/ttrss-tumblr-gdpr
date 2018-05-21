@@ -167,6 +167,8 @@ class Af_Tumblr_GDPR extends Plugin {
 
 		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('Tumblr GDPR')."\">";
 
+		print "<p>" . __("List of domains hosted by this plugin (add your own):") . "</p>";
+
 		print "<form dojoType=\"dijit.form.Form\">";
 
 		print "<script type=\"dojo/method\" event=\"onSubmit\" args=\"evt\">
