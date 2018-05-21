@@ -189,7 +189,7 @@ class Af_Tumblr_GDPR extends Plugin {
 
 		print "<table><tr><td>";
 		print "<textarea dojoType=\"dijit.form.SimpleTextarea\" name=\"tumblr_support\" style=\"font-size: 12px; width: 99%; height: 500px;\">";
-		print implode(PHP_EOL, $this->host->get($this, "supported"));
+		print implode(PHP_EOL, $this->host->get($this, "supported")) . PHP_EOL;
 		print "</textarea>";
 		print "</td></tr></table>";
 		print "<p><button dojoType=\"dijit.form.Button\" type=\"submit\">".__("Save")."</button>";
