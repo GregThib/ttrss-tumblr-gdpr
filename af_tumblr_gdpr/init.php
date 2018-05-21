@@ -23,12 +23,19 @@ class Af_Tumblr_GDPR extends Plugin {
 			$host->add_hook($host::HOOK_PREFS_TAB, $this);
 		}
 
-		$this->supported = array(
-			'.tumblr.com',
-			'shencomix.com',
-			'aurevoirmadame.fr',
-			'bonjourmadame.fr',
-		);
+		if(!$this->host->get($this, 'supported')) {
+			$this->host->set($this, 'supported', array(
+				'.tumblr.com',
+			));
+		}
+	}
+
+	private function is_supported($url) {
+		$supported = $this->host->get($this, "supported");
+		$supported = array_map(function($a) {return preg_quote($a, '/');}, $supported);
+		$preg='/' . implode('|', $supported) . '/i';
+
+		return preg_match($preg, $url);
 	}
 
 	private function fetch_tumblr_contents($url, $login = false, $pass = false) {
@@ -159,19 +166,47 @@ class Af_Tumblr_GDPR extends Plugin {
 	}
 
 	function hook_prefs_tab($args) {
-		if ($args != "prefFeeds") return;
+		if ($args != "prefPrefs") return;
 
-		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('Feeds supported by af_tumblr_gdpr')."\">";
+		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('Tumblr GDPR')."\">";
 
-		print "<p>" . __("The following feeds are currently supported:") . "</p>";
+		print "<form dojoType=\"dijit.form.Form\">";
 
-		print "<ul class=\"browseFeedList\" style=\"border-width : 1px\">";
-		foreach ($this->supported as $feed) {
-			print "<li>$feed</li>";
-		}
-		print "</ul>";
+		print "<script type=\"dojo/method\" event=\"onSubmit\" args=\"evt\">
+			evt.preventDefault();
+			if (this.validate()) {
+				new Ajax.Request('backend.php', {
+					parameters: dojo.objectToQuery(this.getValues()),
+					onComplete: function(transport) {
+						if (transport.responseText.indexOf('error')>=0) notify_error(transport.responseText);
+							else notify_info(transport.responseText);
+					}
+				});
+				//this.reset();
+			}
+			</script>";
 
+		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"op\" value=\"pluginhandler\">";
+		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"method\" value=\"save\">";
+		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"plugin\" value=\"af_tumblr_gdpr\">";
+
+		print "<table><tr><td>";
+		print "<textarea dojoType=\"dijit.form.SimpleTextarea\" name=\"tumblr_support\" style=\"font-size: 12px; width: 99%; height: 500px;\">";
+		print implode(PHP_EOL, $this->host->get($this, "supported"));
+		print "</textarea>";
+		print "</td></tr></table>";
+		print "<p><button dojoType=\"dijit.form.Button\" type=\"submit\">".__("Save")."</button>";
+		print "</form>";
 		print "</div>";
+	}
+
+	function save()
+	{
+		$supported = explode(PHP_EOL, $_POST['tumblr_support']);
+		$supported = array_filter($supported);
+
+		$this->host->set($this, 'supported', $supported);
+		echo __("Configuration saved.");
 	}
 
 	// Subscribe to the feed, but post consent data before
@@ -179,11 +214,13 @@ class Af_Tumblr_GDPR extends Plugin {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	function hook_subscribe_feed($contents, $fetch_url, $auth_login, $auth_pass) {
-                if(!$contents) {
-			$contents = $this->hook_fetch_feed($contents, $fetch_url, 0, 0, 0, $auth_login, $auth_pass);
-		}
+		//if ($contents) return $contents;
+		if (!$this->is_supported($fetch_url)) return $contents;
 
-		return $contents;
+		$feed_data = $this->fetch_tumblr_contents($fetch_url, $auth_login, $auth_pass);
+		$feed_data = trim($feed_data);
+
+		return $feed_data;
 	}
 
 
@@ -192,8 +229,10 @@ class Af_Tumblr_GDPR extends Plugin {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	function hook_feed_basic_info($basic_info, $fetch_url, $owner_uid, $feed, $auth_login, $auth_pass) {
-		$feed_data = '';
-		$feed_data = $this->hook_fetch_feed($feed_data, $fetch_url, $owner_uid, $feed, 0, $auth_login, $auth_pass);
+		if (!$this->is_supported($fetch_url)) return $feed_data;
+
+		$feed_data = $this->fetch_tumblr_contents($fetch_url, $auth_login, $auth_pass);
+		$feed_data = trim($feed_data);
 
 		$rss = new FeedParser($feed_data);
 		$rss->init();
@@ -213,11 +252,10 @@ class Af_Tumblr_GDPR extends Plugin {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	function hook_fetch_feed($feed_data, $fetch_url, $owner_uid, $feed, $last_article_timestamp, $auth_login, $auth_pass) {
-		$preg='/' . implode('|', array_map(function($a) {return preg_quote($a, '/');}, $this->supported)) . '/i';
-		if (preg_match($preg, $fetch_url)) {
-			$feed_data = $this->fetch_tumblr_contents($fetch_url, $auth_login, $auth_pass);
-			$feed_data = trim($feed_data);
-		}
+		if (!$this->is_supported($fetch_url)) return $feed_data;
+
+		$feed_data = $this->fetch_tumblr_contents($fetch_url, $auth_login, $auth_pass);
+		$feed_data = trim($feed_data);
 
 		return $feed_data;
 	}
