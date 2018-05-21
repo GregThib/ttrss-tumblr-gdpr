@@ -58,7 +58,6 @@ class Af_Tumblr_GDPR extends Plugin {
 
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, FILE_FETCH_CONNECT_TIMEOUT);
 		curl_setopt($ch, CURLOPT_TIMEOUT, FILE_FETCH_TIMEOUT);
-		curl_setopt($ch, CURLOPT_IPRESOLVE,  CURL_IPRESOLVE_V4);
 		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, !ini_get("open_basedir"));
 		curl_setopt($ch, CURLOPT_MAXREDIRS, 20);
 		curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
@@ -68,6 +67,8 @@ class Af_Tumblr_GDPR extends Plugin {
 		curl_setopt($ch, CURLOPT_USERAGENT, SELF_USER_AGENT);
 		curl_setopt($ch, CURLOPT_ENCODING, "");
 		//curl_setopt($ch, CURLOPT_REFERER, $url);
+		if(version_compare(curl_version()['version'], '7.10.8') >= 0)
+			curl_setopt($ch, CURLOPT_IPRESOLVE,  CURL_IPRESOLVE_V4);
 
 		// Download limit
 		curl_setopt($ch, CURLOPT_NOPROGRESS, false);
