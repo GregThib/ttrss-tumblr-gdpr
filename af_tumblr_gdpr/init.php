@@ -26,7 +26,7 @@ class Af_Tumblr_GDPR extends Plugin {
 	}
 
 	private function is_supported($url) {
-		$supported = $this->host->get($this, "supported");
+		$supported = $this->host->get($this, "supported", array());
 		$supported = array_map(function($a) {return preg_quote($a, '/');}, $supported);
 		$preg='/\.tumblr\.com|' . implode('|', $supported) . '/i';
 
@@ -191,7 +191,7 @@ class Af_Tumblr_GDPR extends Plugin {
 
 		print "<table><tr><td>";
 		print "<textarea dojoType=\"dijit.form.SimpleTextarea\" name=\"tumblr_support\" style=\"font-size: 12px; width: 99%; height: 500px;\">";
-		print implode(PHP_EOL, $this->host->get($this, "supported")) . PHP_EOL;
+		print implode(PHP_EOL, $this->host->get($this, "supported", array())) . PHP_EOL;
 		print "</textarea>";
 		print "</td></tr></table>";
 		print "<p><button dojoType=\"dijit.form.Button\" type=\"submit\">".__("Save")."</button>";
