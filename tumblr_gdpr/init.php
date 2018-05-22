@@ -1,5 +1,5 @@
 <?php
-class Af_Tumblr_GDPR extends Plugin {
+class Tumblr_GDPR extends Plugin {
 	private $host;
 	private $supported = array();
 
@@ -39,7 +39,7 @@ class Af_Tumblr_GDPR extends Plugin {
 		global $fetch_last_content_type;
 		global $fetch_last_error_content;
 		global $fetch_effective_url;
-		
+
 		$cookie='';
 		$parse_cookie = function($ch, $header_line) use(&$cookie) {
 			if(preg_match("/^Set-Cookie: (.*)$/iU", $header_line, $matches)) {
@@ -106,7 +106,7 @@ class Af_Tumblr_GDPR extends Plugin {
 		curl_setopt($ch, CURLOPT_COOKIESESSION, true);
 		$ret = @curl_exec($ch);
 		$ret = @json_decode($ret, true);
-		
+
 		// Next, get the normal page
 		if(isset($ret['redirect_to'])) $url = $ret['redirect_to'];
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -162,56 +162,7 @@ class Af_Tumblr_GDPR extends Plugin {
 		return $contents;
 	}
 
-	function hook_prefs_tab($args) {
-		if ($args != "prefPrefs") return;
-
-		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('Tumblr GDPR')."\">";
-
-		print "<p>" . __("List of domains hosted by tumblr (add your own):") . "</p>";
-
-		print "<form dojoType=\"dijit.form.Form\">";
-
-		print "<script type=\"dojo/method\" event=\"onSubmit\" args=\"evt\">
-			evt.preventDefault();
-			if (this.validate()) {
-				new Ajax.Request('backend.php', {
-					parameters: dojo.objectToQuery(this.getValues()),
-					onComplete: function(transport) {
-						if (transport.responseText.indexOf('error')>=0) notify_error(transport.responseText);
-							else notify_info(transport.responseText);
-					}
-				});
-				//this.reset();
-			}
-			</script>";
-
-		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"op\" value=\"pluginhandler\">";
-		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"method\" value=\"save\">";
-		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"plugin\" value=\"af_tumblr_gdpr\">";
-
-		print "<table><tr><td>";
-		print "<textarea dojoType=\"dijit.form.SimpleTextarea\" name=\"tumblr_support\" style=\"font-size: 12px; width: 99%; height: 500px;\">";
-		print implode(PHP_EOL, $this->host->get($this, "supported", array())) . PHP_EOL;
-		print "</textarea>";
-		print "</td></tr></table>";
-		print "<p><button dojoType=\"dijit.form.Button\" type=\"submit\">".__("Save")."</button>";
-		print "</form>";
-		print "</div>";
-	}
-
-	function save()
-	{
-		$supported = explode("\r\n", $_POST['tumblr_support']);
-		$supported = array_filter($supported);
-
-		$this->host->set($this, 'supported', $supported);
-		echo __("Configuration saved.");
-	}
-
 	// Subscribe to the feed, but post consent data before
-	/**
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-	 */
 	function hook_subscribe_feed($contents, $fetch_url, $auth_login, $auth_pass) {
 		//if ($contents) return $contents;
 		if (!$this->is_supported($fetch_url)) return $contents;
@@ -221,7 +172,6 @@ class Af_Tumblr_GDPR extends Plugin {
 
 		return $feed_data;
 	}
-
 
 	// Get the feed's basic info, but post consent data before
 	/**
@@ -242,7 +192,7 @@ class Af_Tumblr_GDPR extends Plugin {
 				'site_url' => mb_substr(rewrite_relative_url($fetch_url, $rss->get_link()), 0, 245)
 			);
 		}
-		
+
 		return $basic_info;
 	}
 
@@ -257,6 +207,52 @@ class Af_Tumblr_GDPR extends Plugin {
 		$feed_data = trim($feed_data);
 
 		return $feed_data;
+	}
+
+	// Preference settings to add website hosted by tumblr but w/ a different URI
+	function hook_prefs_tab($args) {
+		if ($args != "prefPrefs") return;
+
+		print "<div dojoType=\"dijit.layout.AccordionPane\" title=\"".__('Tumblr GDPR')."\">";
+
+		print "<p>" . __("List of domains hosted by tumblr (add your own):") . "</p>";
+
+		print "<form dojoType=\"dijit.form.Form\">";
+		print "<script type=\"dojo/method\" event=\"onSubmit\" args=\"evt\">
+			evt.preventDefault();
+			if (this.validate()) {
+				new Ajax.Request('backend.php', {
+					parameters: dojo.objectToQuery(this.getValues()),
+					onComplete: function(transport) {
+						if (transport.responseText.indexOf('error')>=0) notify_error(transport.responseText);
+							else notify_info(transport.responseText);
+					}
+				});
+				//this.reset();
+			}
+			</script>";
+		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"op\" value=\"pluginhandler\">";
+		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"method\" value=\"save\">";
+		print "<input dojoType=\"dijit.form.TextBox\" style=\"display : none\" name=\"plugin\" value=\"tumblr_gdpr\">";
+
+		print "<table><tr><td>";
+		print "<textarea dojoType=\"dijit.form.SimpleTextarea\" name=\"tumblr_support\" style=\"font-size: 12px; width: 99%; height: 500px;\">";
+		print implode(PHP_EOL, $this->host->get($this, "supported", array())) . PHP_EOL;
+		print "</textarea>";
+		print "</td></tr></table>";
+
+		print "<p><button dojoType=\"dijit.form.Button\" type=\"submit\">".__("Save")."</button>";
+		print "</form>";
+
+		print "</div>";
+	}
+
+	function save() {
+		$supported = explode("\r\n", $_POST['tumblr_support']);
+		$supported = array_filter($supported);
+
+		$this->host->set($this, 'supported', $supported);
+		echo __("Configuration saved.");
 	}
 
 	function api_version() {
