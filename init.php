@@ -88,32 +88,57 @@ class Tumblr_GDPR extends Plugin {
 		if ($login && $pass)
 			curl_setopt($ch, CURLOPT_USERPWD, "$login:$pass");
 
-		// First, get cookie, yumi
-		//$payload = array('eu_resident' => 'true', 'gdpr_consent_core' => 'true', 'redirect_to' => $url);
-		$payload = array(
-			"eu_resident" => "True",
-			"gdpr_consent_core" => "False",
-			"gdpr_consent_first_party_ads" => "False",
-			"gdpr_consent_search_history" => "False",
-			"gdpr_consent_third_party_ads" => "False",
-			"gdpr_is_acceptable_age" => "False",
-			"redirect_to" => $url);
+		// I . First, get form key id
+		$tumblr_form_key = '';
+		curl_setopt($ch, CURLOPT_URL, 'https://www.tumblr.com/privacy/consent');
+		curl_setopt($ch, CURLOPT_HEADER, false);
+		if (preg_match('/id="tumblr_form_key" content="([^"]*)">/', $ret, $matches)) {
+			$tumblr_form_key = $matches[1];
+		}
+
+		// II . Next, get cookie, yumi
+		// - maybe a way to generate this list ?
+		$vendor_consents = urlencode(
+			"granted_purposes=&" .
+			"denied_purposes=1,2,3,4,5&" .
+			"granted_vendor_ids=&" .
+			"denied_vendor_ids=147,57,50,39,93,22,74,130,6,27,81,32,122,128,36,10,77,24,85,91,71,118,1,78,61,67,97,109,95,79,34,112,69,127,140,11,60,52,86,111,68,45,114,89,21,23,159,70,25&" .
+			"granted_vendor_oids=&" .
+			"denied_vendor_oids=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22,24,25,26,29,30,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,55,56,57,344,58,59,60,61,62,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,199,200,201,202,203,204,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,283,284,285,286,287,288,289,290,291,292,293,294,295,298,299,300,301,302,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,323,324,325,326,327,328,330,331,332,333,334,335,336,337,338,339,340,341,342,343,0&" .
+			"oath_vendor_list_version=5&" .
+			"vendor_list_version=19");
+		$payload = json_encode(array(
+			"vendor_consents" => $vendor_consents,
+			"eu_resident" => true,
+			"gdpr_consent_core" => true,
+			"gdpr_consent_first_party_ads" => true,
+			"gdpr_consent_search_history" => true,
+			"gdpr_consent_third_party_ads" => true,
+			"gdpr_is_acceptable_age" => true,
+			"redirect_to" => $url));
+		$headers = array(
+			"Content-Type: application/json",
+			"X-Requested-With: XMLHttpRequest",
+			"X-tumblr-form-key: $tumblr_form_key",
+			"Origin: https://www.tumblr.com",
+			"Referer: " . curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
 		curl_setopt($ch, CURLOPT_URL, 'https://www.tumblr.com/svc/privacy/consent');
 		curl_setopt($ch, CURLOPT_HEADER, false);
 		curl_setopt($ch, CURLOPT_HEADERFUNCTION, $parse_cookie);
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 		curl_setopt($ch, CURLOPT_COOKIESESSION, true);
 		$ret = @curl_exec($ch);
 		$ret = @json_decode($ret, true);
 
-		// Next, get the normal page
+		// III . Now, get the normal page
 		if(isset($ret['redirect_to'])) $url = $ret['redirect_to'];
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_HEADER, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array());
 		// curl_setopt($ch, CURLOPT_HEADERFUNCTION, /*how to unset ?*/ );
-		curl_setopt($ch, CURLOPT_POST, false);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, "");
+		curl_setopt($ch, CURLOPT_HTTPGET, true);
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie);
 		$ret = @curl_exec($ch);
 
