@@ -40,6 +40,10 @@ class Tumblr_GDPR extends Plugin {
 		global $fetch_last_error_content;
 		global $fetch_effective_url;
 
+		$debug_enabled = defined('DAEMON_EXTENDED_DEBUG') || clean($_REQUEST['xdebug']);
+		_debug_suppress(!$debug_enabled);
+		_debug("Tumblr_GDPR: start", $debug_enabled);
+
 		$cookie='';
 		$parse_cookie = function($ch, $header_line) use(&$cookie) {
 			if(preg_match("/^Set-Cookie: (.*)$/iU", $header_line, $matches)) {
@@ -92,9 +96,11 @@ class Tumblr_GDPR extends Plugin {
 		$tumblr_form_key = '';
 		curl_setopt($ch, CURLOPT_URL, 'https://www.tumblr.com/privacy/consent');
 		curl_setopt($ch, CURLOPT_HEADER, false);
+		$ret = @curl_exec($ch);
 		if (preg_match('/id="tumblr_form_key" content="([^"]*)">/', $ret, $matches)) {
 			$tumblr_form_key = $matches[1];
 		}
+		_debug("Tumblr_GDPR: form_key=$tumblr_form_key", $debug_enabled);
 
 		// II . Next, get cookie, yumi
 		// - maybe a way to generate this list ?
@@ -131,6 +137,7 @@ class Tumblr_GDPR extends Plugin {
 		curl_setopt($ch, CURLOPT_COOKIESESSION, true);
 		$ret = @curl_exec($ch);
 		$ret = @json_decode($ret, true);
+		_debug("Tumblr_GDPR: cookie=$cookie", $debug_enabled);
 
 		// III . Now, get the normal page
 		if(isset($ret['redirect_to'])) $url = $ret['redirect_to'];
@@ -164,6 +171,7 @@ class Tumblr_GDPR extends Plugin {
 		$fetch_effective_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
 
 		$fetch_last_error_code = $http_code;
+		_debug("Tumblr_GDPR: http_code=$http_code", $debug_enabled);
 
 		if ($http_code != 200) {
 
@@ -173,12 +181,14 @@ class Tumblr_GDPR extends Plugin {
 
 			$fetch_last_error_content = $contents;
 			curl_close($ch);
+			_debug("Tumblr_GDPR: error=$fetch_last_error", $debug_enabled);
 			return false;
 		}
 
 		if (!$contents) {
 			$fetch_last_error = curl_errno($ch) . " " . curl_error($ch);
 			curl_close($ch);
+			_debug("Tumblr_GDPR: error=$fetch_last_error", $debug_enabled);
 			return false;
 		}
 
