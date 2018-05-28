@@ -76,9 +76,13 @@ class Tumblr_GDPR extends Plugin {
 
 		// Download limit
 		curl_setopt($ch, CURLOPT_NOPROGRESS, false);
-		curl_setopt($ch, CURLOPT_BUFFERSIZE, 256); // needed to get 5 arguments in progress function?
+		curl_setopt($ch, CURLOPT_BUFFERSIZE, 256);
 		curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function($curl_handle, $download_size, $downloaded, $upload_size, $uploaded) {
-			return ($downloaded > MAX_DOWNLOAD_FILE_SIZE) ? 1 : 0; // if max size is set, abort when exceeding it
+			if defined('MAX_DOWNLOAD_FILE_SIZE') {
+				return ($downloaded > MAX_DOWNLOAD_FILE_SIZE) ? 1 : 0; // if max size is set, abort when exceeding it
+			} else {
+				return 0;
+			}
 		});
 
 		if (!ini_get("open_basedir")) {
