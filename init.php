@@ -4,7 +4,7 @@ class Tumblr_GDPR extends Plugin {
 	private $supported = array();
 
 	function about() {
-		return array(1.0,
+		return array(1.1,
 			"Fixes Tumblr feeds for GDPR compliance & consent approval (requires CURL)",
 			"GTT");
 	}
