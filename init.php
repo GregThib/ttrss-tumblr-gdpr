@@ -4,7 +4,7 @@ class Tumblr_GDPR extends Plugin {
 	private $supported = array();
 
 	function about() {
-		return array(1.1,
+		return array(1.2,
 			"Fixes Tumblr feeds for GDPR compliance & consent approval (requires CURL)",
 			"GTT");
 	}
@@ -26,11 +26,11 @@ class Tumblr_GDPR extends Plugin {
 	}
 
 	private function is_supported($url) {
-		$supported = $this->host->get($this, "supported", array());
+		$supported = array('.tumblr.com');
+		$supported = array_merge($supported, $this->host->get($this, "supported", array()));
 		$supported = array_map(function($a) {return preg_quote($a, '/');}, $supported);
-		$preg='/\.tumblr\.com|' . implode('|', $supported) . '/i';
 
-		return preg_match($preg, $url);
+		return preg_match('/' . implode('|', $supported) . '/i', $url);
 	}
 
 	private function fetch_tumblr_contents($url, $login = false, $pass = false) {
@@ -202,8 +202,17 @@ class Tumblr_GDPR extends Plugin {
 	}
 
 	// Subscribe to the feed, but post consent data before
+	/**
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 */
 	function hook_subscribe_feed($contents, $fetch_url, $auth_login, $auth_pass) {
-		//if ($contents) return $contents;
+		// first, load plugin and his data
+		static $kind_user = false;
+		if(!$kind_user) {
+			$kind_user = @$this->about()[3] ? $this->host->KIND_SYSTEM : $this->host->KIND_USER;
+			$this->host->load(get_class($this), $kind_user, $_SESSION["uid"], true);
+			$this->host->load_data();
+		}
 		if (!$this->is_supported($fetch_url)) return $contents;
 
 		$feed_data = $this->fetch_tumblr_contents($fetch_url, $auth_login, $auth_pass);
@@ -217,7 +226,7 @@ class Tumblr_GDPR extends Plugin {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	function hook_feed_basic_info($basic_info, $fetch_url, $owner_uid, $feed, $auth_login, $auth_pass) {
-		if (!$this->is_supported($fetch_url)) return $feed_data;
+		if (!$this->is_supported($fetch_url)) return $basic_info;
 
 		$feed_data = $this->fetch_tumblr_contents($fetch_url, $auth_login, $auth_pass);
 		$feed_data = trim($feed_data);
