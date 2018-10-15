@@ -39,7 +39,7 @@ class Tumblr_GDPR extends Plugin {
 			'url' => $url,
 			'login' => $login,
 			'pass' => $pass,
-			'useragent' => 'googlebot'
+			'useragent' => 'Mozilla/5.0 (compatible; Baiduspider; +http://www.baidu.com/search/spider.html)'
 		);
 
 		// II. call normal fetching method with the new UA
