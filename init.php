@@ -68,7 +68,7 @@ class Tumblr_GDPR extends Plugin {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		//curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-		curl_setopt($ch, CURLOPT_USERAGENT, "Wget");
+		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; Baiduspider; +http://www.baidu.com/search/spider.html)');
 		curl_setopt($ch, CURLOPT_ENCODING, "");
 		//curl_setopt($ch, CURLOPT_REFERER, $url);
 		if(version_compare(curl_version()['version'], '7.10.8') >= 0)
