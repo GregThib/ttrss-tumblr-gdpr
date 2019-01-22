@@ -1,5 +1,5 @@
 # ttrss-tumblr-gdpr
-Plugin for TT-RSS to workaround GDPR in Europe
+Plugin for [Tiny Tiny RSS](https://tt-rss.org/) to workaround GDPR in Europe.
 
 # INSTALLATION
 - Put the tumblr_gdpr into your plugins.local if you have (or plugins if not)
