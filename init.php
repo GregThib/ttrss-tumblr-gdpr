@@ -54,7 +54,7 @@ class Tumblr_GDPR extends Plugin {
 		// first, load plugin and his data
 		static $kind_user = false;
 		if(!$kind_user) {
-			$kind_user = @$this->about()[3] ? $this->host->KIND_SYSTEM : $this->host->KIND_USER;
+			$kind_user = isset($this->about()[3]) && $this->about()[3] ? $this->host::KIND_SYSTEM : $this->host::KIND_USER;
 			$this->host->load(get_class($this), $kind_user, $_SESSION["uid"], true);
 			//$this->host->load_data();
 		}
